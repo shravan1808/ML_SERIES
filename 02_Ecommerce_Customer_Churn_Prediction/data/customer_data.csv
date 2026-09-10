@@ -1,0 +1,8 @@
+Customer_ID,Account_Age_Days,Monthly_Spend,Support_Calls,Inactivity_Days,Churn
+C101,120,45.5,4,35,Yes
+C102,450,120.0,0,5,No
+C103,90,25.0,5,40,Yes
+C104,300,85.0,1,12,No
+C105,210,60.0,2,20,No
+C106,60,15.0,6,45,Yes
+C107,500,200.0,1,8,No

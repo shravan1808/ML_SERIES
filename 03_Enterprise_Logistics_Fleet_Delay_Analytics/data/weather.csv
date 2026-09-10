@@ -1,0 +1,6 @@
+Region_ID,Weather_Condition,Traffic_Congestion_Index
+REG_1,Clear,2.1
+REG_2,Heavy Rain,8.5
+REG_3,Fog,6.2
+REG_4,Clear,3.0
+REG_5,Storm,9.1
