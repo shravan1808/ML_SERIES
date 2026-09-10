@@ -1,0 +1,11 @@
+Patient_ID,Heart_Rate_BPM,Systolic_BP,Oxygen_Sat_Pct,Age,Triage_Category
+P_501,72,120,98,35,General
+P_502,125,165,89,68,ICU
+P_503,95,138,94,45,Urgent
+P_504,68,115,99,28,General
+P_505,140,180,85,75,ICU
+P_506,88,130,95,52,Urgent
+P_507,75,122,97,40,General
+P_508,130,170,88,62,ICU
+P_509,92,135,93,50,Urgent
+P_510,70,118,98,30,General
