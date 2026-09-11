@@ -1,0 +1,11 @@
+Device_ID,Primary_OS,App_Version_Code
+DEV_1,iOS,4.5
+DEV_2,Android,4.1
+DEV_3,iOS,4.5
+DEV_4,Android,4.2
+DEV_5,WebOS,3.9
+DEV_6,iOS,4.5
+DEV_7,Android,4.1
+DEV_8,iOS,4.5
+DEV_9,Android,4.2
+DEV_10,Windows,4.0
