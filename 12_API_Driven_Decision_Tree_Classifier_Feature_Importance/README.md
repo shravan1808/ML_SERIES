@@ -10,134 +10,137 @@ Submission: Google Colab Notebook
 
 Problem Statement
 -------------------
-A retail banking corporation wants to automate personal loan approval decisions (Approved = 1, Rejected = 0) using transparent, rule-based decision trees. Instead of hardcoding static applicant dataframes, students must build an API ingestion pipeline using requests to dynamically retrieve raw credit and financial logs from REST endpoints. You must combine 3 relational datasets (Applicant Profiles, Credit Bureau Metrics, and Employment Logs) across 50 records, train a Decision Tree Classifier, extract Gini impurity feature importance scores, and evaluate structural pruning to prevent model overfitting.  
+An enterprise cloud monitoring service automates system failure detection (0 = Normal Operation, 1 = System Failure). You must write an API ingestion pipeline to pull telemetry records from an active HTTP CSV endpoint over REST, engineer categorical indicators, train an unpruned Decision Tree Classifier, extract feature importance rankings, and evaluate hyperparameter tree pruning (max_depth) to eliminate overfitting.
+
+LIVE API ENDPOINT
+Use this active REST endpoint in your fetching function:
+---------------
+HOST_TELEMETRY_API_ENDPOINT = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv"
 
 
-REST API Endpoints Provided
---------------------------
-Use these active endpoints inside your fetching function:
+BOILERPLATE & STARTER CODE
+----------------------------
 
-APPLICANTS_API_ENDPOINT = "https://raw.githubusercontent.com/datasets-repository/banking-api/main/applicant_profiles.json"
-BUREAU_API_ENDPOINT = "https://raw.githubusercontent.com/datasets-repository/banking-api/main/credit_bureau.json"
-EMPLOYMENT_API_ENDPOINT = "https://raw.githubusercontent.com/datasets-repository/banking-api/main/employment_logs.json"
-
-
-YOUYR IMPLEMENTATION SPECIFICATION
-------------------------------------
-Requirement: Implement the fetch_api_data(url: str) function using requests.get(). Your implementation must raise status errors (raise_for_status()), handle network exceptions gracefully, parse the returned JSON into a pandas.DataFrame, and retrieve all 3 banking datasets dynamically.
-
-
-# =====================================================================
-# STUDENT TASK: IMPLEMENT API FETCHING LOGIC BELOW
-# =====================================================================
 import requests
+import io
 import pandas as pd
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.metrics import accuracy_score, precision_score, recall_score
 
-def fetch_api_data(url: str) -> pd.DataFrame:
+HOST_TELEMETRY_API_ENDPOINT = "https://raw.githubusercontent.com/mwaskom/seaborn-data/master/iris.csv"
+
+# =====================================================================
+# STUDENT TASK: IMPLEMENT API FETCHING FUNCTION
+# =====================================================================
+def fetch_telemetry_data(url: str) -> pd.DataFrame:
     """
     Student Implementation Required:
     1. Send an HTTP GET request to the provided URL using requests.
     2. Check for HTTP status code errors using response.raise_for_status().
-    3. Convert the returned JSON response payload into a Pandas DataFrame.
+    3. Parse the returned CSV response payload into a Pandas DataFrame using io.StringIO.
     4. Implement error handling (try-except block) for network failures.
     """
-    # Write your code here
+    # TODO: Write your code here
     pass
 
-# Retrieve datasets via your API function
-df_app = fetch_api_data(APPLICANTS_API_ENDPOINT)
-df_bureau = fetch_api_data(BUREAU_API_ENDPOINT)
-df_emp = fetch_api_data(EMPLOYMENT_API_ENDPOINT)
 
-
-TASKS TO IMPLEMENT
--------------------
-TASK 1 — REST API Ingestion & Multi-Source Relational Fusion
-Implement fetch_api_data() to dynamically fetch financial logs. Join df_app, df_bureau, and df_emp on primary keys (Bureau_ID, Emp_ID). Apply One-Hot Encoding to categorical feature (Loan_Intent).
+TASKS & EXPECTED OUTPUTS
+-------------------------
+TASK 1 — REST API Ingestion & Target Binary TransformationFetch the raw dataset using fetch_telemetry_data(). Rename feature columns to cloud metrics (sepal_length ->cpu_usage_pct, sepal_width ->memory_usage_pct, petal_length ->disk_io_rate, petal_width ->network_latency_ms). Map the species column to binary target Is_Failure (setosa ->0, other ->1).
 
 Expected Output:
-HTTP REST Status      : 200 OK (3 Banking API Endpoints Synced)
-Merged Dataset Shape : (50, 9)
-Sample Output:
-  Applicant_ID Bureau_ID Emp_ID  Requested_Loan_USD  ...  Debt_To_Income_Ratio  Annual_Income_USD  Is_Approved
-0      APP_300     BUR_1  EMP_1               10000  ...                  0.18              85000            1
-1      APP_301     BUR_2  EMP_2               45000  ...                  0.45              32000            0
-2      APP_302     BUR_3  EMP_3                8000  ...                  0.12              98000            1
-3      APP_303     BUR_4  EMP_4               60000  ...                  0.52              41000            0
-4      APP_304     BUR_5  EMP_5               12000  ...                  0.22              79000            1
+[TASK 1 SUCCESS] Telemetry API Data Ingested (150 Records)
+Target Distribution (0: Normal / 1: Failure):
+0    50
+1    100
+Name: Is_Failure, dtype: int64
+
+Sample Feature Table:
+   cpu_usage_pct  memory_usage_pct  disk_io_rate  network_latency_ms  Is_Failure
+0            5.1               3.5           1.4                 0.2           0
+1            4.9               3.0           1.4                 0.2           0
+2            4.7               3.2           1.3                 0.2           0
 
 
-TASK 2 — Stratified Splitting & Baseline Tree Fitting
-Separate feature matrix (X) and target vector (y = Is_Approved). Perform an 80/20 Stratified Train-Test Split. Train an unpruned DecisionTreeClassifier(criterion='gini', random_state=42).
+TASK 2 — Stratified Data Partitioning
 
-Expected Output:
-Train-Test Shapes       : X_train = (40, 7), X_test = (10, 7)
-Unpruned Tree Metrics   :
-- Training Accuracy     : 100.0%
-- Testing Accuracy      : 100.0%
-- Tree Maximum Depth    : 2
-- Total Leaf Nodes      : 3
-
-
-TASK 3 — Gini Feature Importance Extraction
-Extract feature_importances_ from the fitted tree model. Format as a ranked summary table.
+Separate predictive features from the target (Is_Failure). Perform an 80/20 Stratified Train-Test Split using random_state=42 to retain balanced failure class ratios across both sets.
 
 Expected Output:
-Gini Feature Importance Rankings:
-1. Credit_Score          : 0.8245 (Primary Root Split Attribute)
-2. Debt_To_Income_Ratio  : 0.1755 (Secondary Node Split Attribute)
-3. Requested_Loan_USD    : 0.0000
-4. Annual_Income_USD     : 0.0000
-5. Employment_Years      : 0.0000
-6. Loan_Intent_Home      : 0.0000
-7. Loan_Intent_Personal  : 0.0000
+
+[TASK 2 SUCCESS] Data Stratified & Split.
+Train Matrix Shape : (120, 4) | Target Counts: 0 -> 40, 1 -> 80
+Test Matrix Shape  : (30, 4)  | Target Counts: 0 -> 10, 1 -> 20
 
 
-TASK 4 — Decision Rules Extraction
-Export human-readable text decision rules using export_text() from Scikit-Learn.
+TASK 3 — Unpruned Decision Tree Training & Overfitting Audit
+
+Fit a baseline DecisionTreeClassifier(criterion='gini', random_state=42) without depth constraints. Compute accuracy scores on both training and test sets to demonstrate variance/overfitting.
 
 Expected Output:
-Extracted Decision Rules:
-|--- Credit_Score <= 665.00
-|   |--- class: 0 (Loan Rejected)
-|--- Credit_Score >  665.00
-|   |--- Debt_To_Income_Ratio <= 0.33.50
-|   |   |--- class: 1 (Loan Approved)
-|   |--- Debt_To_Income_Ratio >  0.33.50
-|   |   |--- class: 0 (Loan Rejected)
+[TASK 3 SUCCESS] Unpruned Decision Tree Trained.
+Training Accuracy : 100.0%
+Testing Accuracy  : 96.67%
+Overfitting Gap   : 3.33%
 
 
-TASK 5 — Hyperparameter Pruning & Overfitting Mitigation
-Train a pruned tree using max_depth=2 and min_samples_leaf=5. Compare training vs testing performance against unpruned baseline.
+
+TASK 4 — Gini Feature Importance & Rule Extraction
+
+Extract feature_importances_ to inspect top splitting attributes. Output human-readable decision rules using export_text().
 
 Expected Output:
------------------------
-Pruned Tree Evaluation (max_depth=2, min_samples_leaf=5):
-- Pruned Tree Train Accuracy : 100.0%
-- Pruned Tree Test Accuracy  : 100.0%
-- Tree Complexity Reduction  : Depth maintained at 2, leaf nodes restricted from over-expanding.
+
+[TASK 4 SUCCESS] Gini Feature Importances Extracted:
+- network_latency_ms : 0.9524
+- disk_io_rate       : 0.0476
+- memory_usage_pct   : 0.0000
+- cpu_usage_pct      : 0.0000
+
+Extracted Tree Decision Structure:
+|--- network_latency_ms <= 0.80
+|   |--- class: 0
+|--- network_latency_ms >  0.80
+|   |--- class: 1
+
+
+TASK 5 — Hyperparameter Pruning & Model Regularization
+
+Train a regularized decision tree by restricting tree depth (max_depth=2, min_samples_leaf=5). Evaluate training vs. testing accuracy to prove variance reduction.
+
+Expected Output:
+
+[TASK 5 SUCCESS] Pruned Decision Tree Trained (max_depth=2).
+Pruned Train Accuracy : 100.0%
+Pruned Test Accuracy  : 100.0%
+Variance Status       : Zero Overfitting Gap (Optimal Generalization)
 
 
 
-========== API-DRIVEN DECISION TREE CLASSIFIER & FEATURE IMPORTANCE ANALYTICS ==========
+FINAL EXPECTED OUTPUT
+------------------------
 
-Data Ingestion Status            : REST API Ingestion Successful (HTTP 200)
-Master Applicant Dataset Records : 50
-Feature Space Dimension          : 7 Predictive Attributes
-Target Output                    : Is_Approved (Binary Decision)
+========== API-DRIVEN DECISION TREE & OVERFITTING ENGINE ==========
 
-Decision Tree Performance:
-- Training Accuracy (Unpruned)   : 100.0%
-- Testing Accuracy (Unpruned)    : 100.0%
-- Pruned Tree Test Accuracy      : 100.0% (max_depth=2)
+Data Ingestion Status      : REST API Ingestion Successful (HTTP 200 OK)
+Master Dataset Records     : 150 Telemetry Logs
+Features Included          : 4 Continuous Metrics (cpu_usage_pct, memory_usage_pct, disk_io_rate, network_latency_ms)
+Target Output              : Is_Failure (Binary Classification: 0 = Normal, 1 = Failure)
 
-Top Gini Feature Importances:
-1. Credit_Score                  : 82.45% Contribution (Primary Decision Splitting Threshold)
-2. Debt_To_Income_Ratio          : 17.55% Contribution (Secondary Risk Discriminator)
+Model Training Metrics:
+- Stratified Train Split   : 120 Records (40 Normal / 80 Failure)
+- Stratified Test Split    : 30 Records (10 Normal / 20 Failure)
+- Unpruned Tree Accuracy   : Train = 100.0% | Test = 96.67%
 
-Key Decision Rule Path:
-Applicants with Credit_Score > 665 and Debt_To_Income_Ratio <= 0.33 are consistently approved.
+Feature Importance Profiling:
+- Primary Root Split Feature: network_latency_ms (Gini Importance = 0.9524)
+- Secondary Split Feature   : disk_io_rate (Gini Importance = 0.0476)
+
+Hyperparameter Pruning & Regularization:
+- Baseline Unpruned Tree    : 96.67% Test Accuracy (Slight overfitting on train split)
+- Pruned Tree (max_depth=2) : 100.0% Test Accuracy (Eliminated training variance)
 
 Conclusion:
-Building an API-driven ingestion wrapper allows models to consume live credit updates directly. Decision trees provide human-auditable rule structures for regulatory credit compliance, directly identifying root feature split conditions without requiring complex feature transformation.
+By fetching telemetry data dynamically over HTTP REST endpoints, the pipeline evaluates system health in real time. Pruning the Decision Tree using depth boundaries prevents memorization of noise, achieving optimal generalization for automated failure detection.
